@@ -1,0 +1,5 @@
+.living-rps-canvas {
+    background-color: var(--lavender-pastel-5);
+    border-radius: 30px;
+    border: 10px solid var(--lavender-pastel-3);
+}

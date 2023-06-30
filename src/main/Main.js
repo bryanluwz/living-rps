@@ -10,17 +10,17 @@ export default class Main extends Component {
 		this.blobs = [];
 
 		this.state = {
-			startingBlobCount: 90,
-			scissorsBlobCount: 30,
-			paperBlobCount: 30,
-			rockBlobCount: 30,
+			scissorsBlobCount: 20,
+			paperBlobCount: 20,
+			rockBlobCount: 20,
 		};
 
+		this.fps = 60;
 		this.canvasUpdateTimerTick = 0;
 		this.canvasUpdateTimer = setInterval(() => {
 			this.canvasUpdateTimerTick++;
 			this.canvasUpdate();
-		}, 1000 / 60);
+		}, 1000 / this.fps);
 	}
 
 	componentDidMount() {
@@ -61,21 +61,33 @@ export default class Main extends Component {
 		this.updateBlobs();
 	};
 
+	// Reset blobs
+	resetBlobs = () => {
+		this.initBlobs();
+	};
+
 	// Init blobs
 	initBlobs = () => {
 		const canvas = this.canvasRef.current;
+		this.blobs = [];
 
 		for (let i = 0; i < this.state.scissorsBlobCount; i++) {
-			this.blobs.push(new Blob(canvas.width, canvas.height, "scissors"));
+			this.blobs.push(new Blob(canvas.width, canvas.height, "scissors", this.fps));
 		}
 
 		for (let i = 0; i < this.state.paperBlobCount; i++) {
-			this.blobs.push(new Blob(canvas.width, canvas.height, "paper"));
+			this.blobs.push(new Blob(canvas.width, canvas.height, "paper", this.fps));
 		}
 
 		for (let i = 0; i < this.state.rockBlobCount; i++) {
-			this.blobs.push(new Blob(canvas.width, canvas.height, "rock"));
+			this.blobs.push(new Blob(canvas.width, canvas.height, "rock", this.fps));
 		}
+
+		// Each blob would also have a reference to the other blobs
+		this.blobs.forEach(blob => {
+			blob.setAllBlobs(this.blobs);
+		}
+		);
 	};
 
 	// Render blobs
@@ -85,7 +97,7 @@ export default class Main extends Component {
 
 		this.blobs.forEach(blob => {
 			if (blob.img) {
-				context.drawImage(blob.img, blob.x, blob.y, 100, 100);
+				context.drawImage(blob.img, blob.x, blob.y, 50, 50);
 			}
 		});
 	};
@@ -107,9 +119,9 @@ export default class Main extends Component {
 				contentBodyAdditionalClasses={[]}
 				router={this.props.router}
 				handleHeaderTitleClick={() => { console.log("please do not click the title"); }}
-				handleDeleteHistoryButton={() => { console.log("please do not the button"); }}
+				handleDeleteHistoryButton={() => { this.resetBlobs(); }}
 			>
-				<canvas ref={this.canvasRef} style={{ border: "1px solid red" }} />
+				<canvas ref={this.canvasRef} className="living-rps-canvas" />
 			</ContentDisplay>
 		);
 	}
