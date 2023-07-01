@@ -1,15 +1,24 @@
 import { SCISSORS_IMAGE, PAPER_IMAGE, ROCK_IMAGE } from "./ImageConstants";
 
 export class Blob {
-	constructor(canvasWidth, canvasHeight, blobType = "none", fps = 60) {
+	constructor(canvasWidth, canvasHeight, blobSize, blobType = "none", fps = 60,) {
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
+		this.blobSize = blobSize;
 		this.blobType = blobType;
 
 		this.x = 0;
 		this.y = 0;
 		this.img = null;
+
 		this.velocity = 200 / fps;
+		this.escapeVelocity = 250 / fps;
+		this.huntingVelocity = 200 / fps;
+
+		this.predatorDetectionDistance = 100;
+		this.preyDetectionDistance = 200;
+
+		this.angle = 0;
 
 		this.allBlobs = [];
 
@@ -22,8 +31,8 @@ export class Blob {
 		this.canvasHeight = canvasHeight;
 
 		// Clamp x (y) to between 0 and canvas width (height)
-		this.x = Math.max(0, Math.min(this.x, this.canvasWidth));
-		this.y = Math.max(0, Math.min(this.y, this.canvasHeight));
+		this.x = Math.max(50, Math.min(this.x, this.canvasWidth - 50));
+		this.y = Math.max(50, Math.min(this.y, this.canvasHeight - 50));
 	}
 
 	// Set all blobs
@@ -34,13 +43,17 @@ export class Blob {
 	// Like Unity Update method
 	update() {
 		// Update current type when colliding with another blob
-		// To check for "collision", check if there is another blob of a predator type within 50px
-		// If yes, that means collision, and the blob type should be changed to the predator type
+		// To check for "collision", check if there is another blob 
+		// If yes, that means collision, make sure that two blobs don't overlap each other
+		// If yes and collided is of predator type the blob type should be changed to the predator type
+
 		const predatorType = this.getPredatorType();
 		this.allBlobs.forEach(blob => {
-			if (blob.blobType === predatorType) {
-				const distance = Math.sqrt(Math.pow(this.x - blob.x, 2) + Math.pow(this.y - blob.y, 2));
-				if (distance < 50) {
+			// If collided
+			const distance = Math.sqrt(Math.pow(this.x - blob.x, 2) + Math.pow(this.y - blob.y, 2));
+			if (distance < this.blobSize && distance > 0) {
+				// If predator
+				if (blob.blobType === predatorType) {
 					this.blobType = blob.blobType;
 					this.img = blob.img;
 				}
@@ -48,58 +61,64 @@ export class Blob {
 		});
 
 		// Update next position
-		// If there is predator nearby, move away from predator,
-		// Else if there is prey nearby, move towards prey,
-		// Else move randomly within 50px
-		const predatorNearby = this.allBlobs.some(blob => blob.blobType === predatorType &&
-			Math.sqrt(Math.pow(this.x - blob.x, 2) + Math.pow(this.y - blob.y, 2)) < Math.sqrt(Math.pow(this.canvasWidth, 2) + Math.pow(this.canvasHeight, 2)));
+		// Average of angle is towards the center of the canvas
+		// If there is predator nearby, move away from predator by averaging angle away from nearby predator within predator detection distance, 
+		// Else if there is prey nearby, move towards prey by averaging angle towards nearby prey within prey detection distance,
+		// Else change angle randomly with a 1 / this.fps chance of changing angle
 
-		const preyNearby = this.allBlobs.some(blob => blob.blobType === this.blobType &&
-			Math.sqrt(Math.pow(this.x - blob.x, 2) + Math.pow(this.y - blob.y, 2)) < Math.sqrt(Math.pow(this.canvasWidth, 2) + Math.pow(this.canvasHeight, 2)));
+		const nearbyPredators = this.getNearbyPredators(this.predatorDetectionDistance);
+		const nearbyPreys = this.getNearbyPreys(this.preyDetectionDistance);
 
-		if (predatorNearby) {
-			// Move away from predator
-			const predator = this.allBlobs.find(blob => blob.blobType === predatorType);
-			const angle = Math.atan2(this.y - predator.y, this.x - predator.x);
-			this.x += this.velocity * Math.cos(angle);
-			this.y += this.velocity * Math.sin(angle);
+
+		if (nearbyPredators.length > 0) {
+			let sumAngle = 0;
+			nearbyPredators.forEach(predator => {
+				sumAngle += Math.atan2(this.y - predator.y, this.x - predator.x);
+			});
+			this.angle = sumAngle / nearbyPredators.length;
+
+			this.x += this.escapeVelocity * Math.cos(this.angle);
+			this.y += this.escapeVelocity * Math.sin(this.angle);
 		}
+		else if (nearbyPreys.length > 0) {
+			let sumAngle = 0;
+			nearbyPreys.forEach(prey => {
+				sumAngle += Math.atan2(prey.y - this.y, prey.x - this.x);
+			});
+			this.angle = sumAngle / nearbyPreys.length;
 
-		if (preyNearby) {
-			// Move towards prey
-			const prey = this.allBlobs.find(blob => blob.blobType === this.blobType);
-			const angle = Math.atan2(prey.y - this.y, prey.x - this.x);
-			this.x += this.velocity * Math.cos(angle);
-			this.y += this.velocity * Math.sin(angle);
+			this.x += this.huntingVelocity * Math.cos(this.angle);
+			this.y += this.huntingVelocity * Math.sin(this.angle);
 		}
+		else {
+			if (Math.random() < 10 / this.fps) {
+				this.angle = Math.random() * 2 * Math.PI;
+			}
 
-		if (!predatorNearby && !preyNearby) {
-			// Move randomly
-			const angle = Math.random() * 2 * Math.PI;
-			this.x += this.velocity * Math.cos(angle);
-			this.y += this.velocity * Math.sin(angle);
+			this.x += this.velocity * Math.cos(this.angle);
+			this.y += this.velocity * Math.sin(this.angle);
 		}
 
 		// If out of bounds, move back in bounds
 		if (this.x < 0) {
 			this.x = 0;
 		}
-		if (this.x > this.canvasWidth - 50) {
-			this.x = this.canvasWidth - 50;
+		if (this.x > this.canvasWidth - this.blobSize) {
+			this.x = this.canvasWidth - this.blobSize;
 		}
 		if (this.y < 0) {
 			this.y = 0;
 		}
-		if (this.y > this.canvasHeight - 50) {
-			this.y = this.canvasHeight - 50;
+		if (this.y > this.canvasHeight - this.blobSize) {
+			this.y = this.canvasHeight - this.blobSize;
 		}
 	}
 
 	// Like Unity Start method
 	start() {
-		// Init coordinates, to random, and 50px margin from edge
-		this.x = Math.floor(50 + Math.random() * (this.canvasWidth - 50));
-		this.y = Math.floor(50 + Math.random() * (this.canvasHeight - 50));
+		// Init coordinates, to random position within canvas
+		this.x = Math.floor(0 + Math.random() * (this.canvasWidth - this.blobSize));
+		this.y = Math.floor(0 + Math.random() * (this.canvasHeight - this.blobSize));
 
 		// Init image
 		switch (this.blobType) {
@@ -138,10 +157,36 @@ export class Blob {
 				return "paper";
 			case "paper":
 				return "rock";
-			case "paper":
+			case "rock":
 				return "scissors";
 			default:
 				return "none";
 		}
+	}
+
+	getNearbyPredators(predatorDetectionDistance = 69420) {
+		const nearbyPredators = [];
+		this.allBlobs.forEach(blob => {
+			if (blob.blobType === this.getPredatorType()) {
+				const distance = Math.sqrt(Math.pow(this.x - blob.x, 2) + Math.pow(this.y - blob.y, 2));
+				if (distance < predatorDetectionDistance) {
+					nearbyPredators.push(blob);
+				}
+			}
+		});
+		return nearbyPredators;
+	}
+
+	getNearbyPreys(preyDetectionDistance = 69420) {
+		const nearbyPreys = [];
+		this.allBlobs.forEach(blob => {
+			if (blob.blobType === this.getPreyType()) {
+				const distance = Math.sqrt(Math.pow(this.x - blob.x, 2) + Math.pow(this.y - blob.y, 2));
+				if (distance < preyDetectionDistance) {
+					nearbyPreys.push(blob);
+				}
+			}
+		});
+		return nearbyPreys;
 	}
 }
