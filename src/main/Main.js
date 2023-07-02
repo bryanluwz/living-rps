@@ -10,14 +10,14 @@ export default class Main extends Component {
 		this.blobs = [];
 
 		this.state = {
-			scissorsBlobCount: 10,
-			paperBlobCount: 10,
-			rockBlobCount: 10,
+			scissorsBlobCount: 15,
+			paperBlobCount: 15,
+			rockBlobCount: 15,
 			blobSize: 50,
 			isEnd: false,
 		};
 
-		this.fps = 400;
+		this.fps = 60;
 		this.canvasUpdateTimerTick = 0;
 		this.canvasUpdateTimer = setInterval(() => {
 			if (!this.state.isEnd) {
@@ -45,14 +45,15 @@ export default class Main extends Component {
 		const canvas = this.canvasRef.current;
 		if (!canvas) return;
 
-		canvas.width = window.innerWidth * 0.9;
-		canvas.height = window.innerHeight * 0.8;
+		canvas.width = window.innerWidth * 1;
+		canvas.height = window.innerHeight * 1;
 
-		this.setState({ blobSize: Math.min(50, canvas.width * 0.05) });
+		this.setState({ blobSize: Math.max(25, Math.min(50, canvas.width * 0.05)) });
 
 		// Rerender code here
 		this.blobs.forEach(blob => {
 			blob.updateCanvasSize(canvas.width, canvas.height);
+			blob.updateBlobSize(this.state.blobSize);
 		}
 		);
 	};
@@ -69,13 +70,13 @@ export default class Main extends Component {
 		this.renderBlobs();
 		this.updateBlobs();
 
-		// Check if game is over
-		this.blobs.forEach(blob => {
-			// If all blobs are of the same type
-			if (this.blobs.every(b => b.blobType === blob.blobType)) {
-				this.setState({ isEnd: true });
-			}
-		});
+		// Check if game is over, (temp disabled)
+		// this.blobs.forEach(blob => {
+		// 	// If all blobs are of the same type
+		// 	if (this.blobs.every(b => b.blobType === blob.blobType)) {
+		// 		this.setState({ isEnd: true });
+		// 	}
+		// });
 	};
 
 	// Reset blobs
@@ -137,7 +138,7 @@ export default class Main extends Component {
 				displayName={Main.displayName}
 				displayClearHistory={true}
 				faIcon={"fa-refresh"}
-				contentBodyAdditionalClasses={[]}
+				contentBodyAdditionalClasses={["living-rps-content-body"]}
 				router={this.props.router}
 				handleHeaderTitleClick={() => { console.log("please do not click the title"); }}
 				handleDeleteHistoryButton={() => { this.resetBlobs(); }}

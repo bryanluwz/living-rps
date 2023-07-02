@@ -7,34 +7,27 @@ export class Blob {
 		this.blobSize = blobSize;
 		this.blobType = blobType;
 
-		this.x = 0;
+		this.x = 0; // These x and y are top left corner of the blob
 		this.y = 0;
 		this.img = null;
 
-		this.velocity = 150 / fps;
+		this.velocity = 80 / fps;
 		this.velocityBoost = 1;
 
-		this.predatorDetectionDistance = blobSize * 4;
-		this.preyDetectionDistance = blobSize * 2;
+		this.predatorDetectionDistance = blobSize * 3;
+		this.preyDetectionDistance = blobSize * 5;
 
 		this.canTeleport = true;
-		this.isHungry = true; // Every 500ms is isHungry is true, the blob will increase velocityBoost by 0.1, resetted by eating 
+		this.isHungry = true;
 
 		this.angle = 0;
 
 		this.allBlobs = [];
 
 		this.start();
-
-		setInterval(() => {
-			if (this.isHungry) {
-				this.velocityBoost += 0.01;
-				this.velocityBoost = Math.min(this.velocityBoost, 1.5);
-			}
-		}, 500);
 	}
 
-	// Update canvas size
+	// Update blob size and others
 	updateCanvasSize(canvasWidth, canvasHeight) {
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
@@ -42,6 +35,12 @@ export class Blob {
 		// Clamp x (y) to between 0 and canvas width (height)
 		this.x = Math.max(50, Math.min(this.x, this.canvasWidth - 50));
 		this.y = Math.max(50, Math.min(this.y, this.canvasHeight - 50));
+	}
+
+	updateBlobSize(blobSize) {
+		this.blobSize = blobSize;
+		this.predatorDetectionDistance = blobSize * 4;
+		this.preyDetectionDistance = blobSize * 2;
 	}
 
 	// Set all blobs
@@ -57,23 +56,19 @@ export class Blob {
 		// If yes, that means collision, make sure that two blobs don't overlap each other
 		// If yes and collided is of predator type the blob type should be changed to the predator type
 
-		const predatorType = this.getPredatorType();
 		this.allBlobs.forEach(blob => {
 			// If collided
 			const distance = Math.sqrt(Math.pow(this.x - blob.x, 2) + Math.pow(this.y - blob.y, 2));
 			if (distance < this.blobSize && distance > 0) {
 				// If predator
-				if (blob.blobType === predatorType) {
+				if (blob.blobType === this.getPredatorType()) {
 					this.blobType = blob.blobType;
-					this.img = blob.img;;
-				}
+					this.img = blob.img;
 
-				// If prey
-				else if (this.blobType === predatorType) {
-					this.isHungry = false;
+					blob.isHungry = false;
+					blob.velocityBoost = 1;
 					setTimeout(() => {
-						this.isHungry = true;
-						this.velocityBoost = 1;
+						blob.isHungry = true;
 					}, 2000);
 				}
 			}
@@ -88,19 +83,30 @@ export class Blob {
 		const nearbyPredators = this.getNearbyPredators(this.predatorDetectionDistance);
 		const nearbyPreys = this.getNearbyPreys(this.preyDetectionDistance);
 
+		// Run away from predators
 		if (nearbyPredators.length > 0) {
 			let sumAngle = 0;
 			nearbyPredators.forEach(predator => {
 				sumAngle += Math.atan2(this.y - predator.y, this.x - predator.x);
 			});
-			this.angle = sumAngle / nearbyPredators.length;
+			this.angle = sumAngle / nearbyPredators.length + Math.random() * Math.PI / 2 - Math.PI / 4;
 		}
+
+		// Run towards nearest prey
 		else if (nearbyPreys.length > 0) {
-			let sumAngle = 0;
-			nearbyPreys.forEach(prey => {
-				sumAngle += Math.atan2(prey.y - this.y, prey.x - this.x);
-			});
-			this.angle = sumAngle / nearbyPreys.length;
+			// let sumAngle = 0;
+			// nearbyPreys.forEach(prey => {
+			// 	sumAngle += Math.atan2(prey.y - this.y, prey.x - this.x);
+			// });
+			// this.angle = sumAngle / nearbyPreys.length;
+
+			const prey = nearbyPreys[0];
+			this.angle = Math.atan2(prey.y - this.y, prey.x - this.x) + Math.random() * Math.PI / 2 - Math.PI / 4;
+
+			if (this.isHungry) {
+				this.velocityBoost += 0.05;
+				this.velocityBoost = Math.min(this.velocityBoost, 1.25);
+			}
 		}
 		else {
 			if (Math.random() < 10 / this.fps) {
@@ -162,6 +168,7 @@ export class Blob {
 		// Init coordinates, to random position within canvas
 		this.x = Math.floor(0 + Math.random() * (this.canvasWidth - this.blobSize));
 		this.y = Math.floor(0 + Math.random() * (this.canvasHeight - this.blobSize));
+		this.angle = Math.random() * 2 * Math.PI;
 
 		// Init image
 		switch (this.blobType) {
