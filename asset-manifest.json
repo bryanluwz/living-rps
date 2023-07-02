@@ -1,14 +1,14 @@
 {
   "files": {
-    "main.css": "/living-rps/static/css/main.6385713d.css",
-    "main.js": "/living-rps/static/js/main.c6252e46.js",
+    "main.css": "/living-rps/static/css/main.a8db4bf0.css",
+    "main.js": "/living-rps/static/js/main.31941328.js",
     "static/media/lulo-font.ttf": "/living-rps/static/media/lulo-font.cf6ce051896b18d3449b.ttf",
     "index.html": "/living-rps/index.html",
-    "main.6385713d.css.map": "/living-rps/static/css/main.6385713d.css.map",
-    "main.c6252e46.js.map": "/living-rps/static/js/main.c6252e46.js.map"
+    "main.a8db4bf0.css.map": "/living-rps/static/css/main.a8db4bf0.css.map",
+    "main.31941328.js.map": "/living-rps/static/js/main.31941328.js.map"
   },
   "entrypoints": [
-    "static/css/main.6385713d.css",
-    "static/js/main.c6252e46.js"
+    "static/css/main.a8db4bf0.css",
+    "static/js/main.31941328.js"
   ]
 }
