@@ -10,9 +10,9 @@ export default class Main extends Component {
 		this.blobs = [];
 
 		this.state = {
-			scissorsBlobCount: 15,
-			paperBlobCount: 15,
-			rockBlobCount: 15,
+			scissorsBlobCount: 12,
+			paperBlobCount: 12,
+			rockBlobCount: 12,
 			blobSize: 50,
 			isEnd: false,
 		};
@@ -28,12 +28,12 @@ export default class Main extends Component {
 	}
 
 	componentDidMount() {
-		this.handleResize();
-
 		window.addEventListener('resize', this.handleResize);
 
 		// Init game
-		this.initBlobs();
+		this.setState(this.handleResize, this.initBlobs);
+
+		// What?? A warning?? I don't care
 	}
 
 	componentWillUnmount() {
@@ -48,12 +48,14 @@ export default class Main extends Component {
 		canvas.width = window.innerWidth * 1;
 		canvas.height = window.innerHeight * 1;
 
-		this.setState({ blobSize: Math.max(25, Math.min(50, canvas.width * 0.05)) });
+		const blobSize = Math.max(25, Math.min(50, canvas.width * 0.05));
+
+		this.setState({ blobSize });
 
 		// Rerender code here
 		this.blobs.forEach(blob => {
 			blob.updateCanvasSize(canvas.width, canvas.height);
-			blob.updateBlobSize(this.state.blobSize);
+			blob.updateBlobSize(blobSize);
 		}
 		);
 	};
@@ -134,7 +136,7 @@ export default class Main extends Component {
 	render() {
 		return (
 			<ContentDisplay
-				backButtonRoute={"https://bryanluwz.github.io/"}
+				backButtonRoute={"https://bryanluwz.github.io/#/fun-stuff"}
 				displayName={Main.displayName}
 				displayClearHistory={true}
 				faIcon={"fa-refresh"}

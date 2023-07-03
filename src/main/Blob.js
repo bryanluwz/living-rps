@@ -4,8 +4,11 @@ export class Blob {
 	constructor(canvasWidth, canvasHeight, blobSize, blobType = "none", fps = 60) {
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
+
 		this.blobSize = blobSize;
 		this.blobType = blobType;
+
+		this.fps = fps;
 
 		this.x = 0; // These x and y are top left corner of the blob
 		this.y = 0;
@@ -89,19 +92,22 @@ export class Blob {
 			nearbyPredators.forEach(predator => {
 				sumAngle += Math.atan2(this.y - predator.y, this.x - predator.x);
 			});
-			this.angle = sumAngle / nearbyPredators.length + Math.random() * Math.PI / 2 - Math.PI / 4;
+
+			this.angle = sumAngle / nearbyPredators.length;
+
+			// if (Math.random() < (4 / this.fps)) {
+			// 	this.angle += Math.random() * Math.PI / 2 - Math.PI;
+			// }
 		}
 
 		// Run towards nearest prey
 		else if (nearbyPreys.length > 0) {
-			// let sumAngle = 0;
-			// nearbyPreys.forEach(prey => {
-			// 	sumAngle += Math.atan2(prey.y - this.y, prey.x - this.x);
-			// });
-			// this.angle = sumAngle / nearbyPreys.length;
-
 			const prey = nearbyPreys[0];
-			this.angle = Math.atan2(prey.y - this.y, prey.x - this.x) + Math.random() * Math.PI / 2 - Math.PI / 4;
+			this.angle = Math.atan2(prey.y - this.y, prey.x - this.x);
+
+			// if (Math.random() < (4 / this.fps)) {
+			// 	this.angle += Math.random() * Math.PI / 2 - Math.PI;
+			// }
 
 			if (this.isHungry) {
 				this.velocityBoost += 0.05;
@@ -109,7 +115,7 @@ export class Blob {
 			}
 		}
 		else {
-			if (Math.random() < 10 / this.fps) {
+			if (Math.random() < (2 / this.fps)) {
 				this.angle = Math.random() * 2 * Math.PI;
 			}
 		}
