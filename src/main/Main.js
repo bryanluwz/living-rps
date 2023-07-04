@@ -1,4 +1,4 @@
-import { Component, createRef } from "react";
+import { Component, Fragment, createRef } from "react";
 import { ContentDisplay } from "../components/others/";
 import { Blob } from "./Blob";
 
@@ -15,6 +15,8 @@ export default class Main extends Component {
 			rockBlobCount: 12,
 			blobSize: 50,
 			isEnd: false,
+			isSoundOn: false,
+			isSoundInit: false
 		};
 
 		this.fps = 60;
@@ -25,6 +27,12 @@ export default class Main extends Component {
 				this.canvasUpdate();
 			}
 		}, 1000 / this.fps);
+
+		this.audioRefs = {
+			scissors: createRef(),
+			paper: createRef(),
+			rock: createRef(),
+		};
 	}
 
 	componentDidMount() {
@@ -94,20 +102,22 @@ export default class Main extends Component {
 		this.blobs = [];
 
 		for (let i = 0; i < this.state.scissorsBlobCount; i++) {
-			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "scissors", this.fps));
+			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "scissors", this.fps, this.audioRefs.scissors.current));
+			console.log(this.blobs[i]);
 		}
 
 		for (let i = 0; i < this.state.paperBlobCount; i++) {
-			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "paper", this.fps));
+			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "paper", this.fps, this.audioRefs.paper.current));
 		}
 
 		for (let i = 0; i < this.state.rockBlobCount; i++) {
-			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "rock", this.fps));
+			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "rock", this.fps, this.audioRefs.rock.current));
 		}
 
 		// Each blob would also have a reference to the other blobs
 		this.blobs.forEach(blob => {
 			blob.setAllBlobs(this.blobs);
+			blob.setIsSoundOn(this.state.isSoundOn);
 		}
 		);
 	};
@@ -141,10 +151,35 @@ export default class Main extends Component {
 				displayClearHistory={true}
 				faIcon={"fa-refresh"}
 				contentBodyAdditionalClasses={["living-rps-content-body"]}
+				overrideTitle={
+					<Fragment>
+						<span>Living RPS </span>
+						{this.state.isSoundOn ?
+							< i className="fa fa-volume-up" aria-hidden="true" /> :
+							< i className="fa fa-volume-off" aria-hidden="true" />}
+					</Fragment>
+				}
 				router={this.props.router}
-				handleHeaderTitleClick={() => { console.log("please do not click the title"); }}
+				handleHeaderTitleClick={() => {
+					// Play all sounds if sound is not initialized because chrome wont let me play sound without user interaction
+					if (!this.state.isSoundInit) {
+						this.audioRefs.scissors.current.play();
+						this.audioRefs.paper.current.play();
+						this.audioRefs.rock.current.play();
+					}
+					const isSoundOn = !this.state.isSoundOn;
+					this.setState({ isSoundOn: isSoundOn, isSoundInit: true },
+						() => {
+							this.blobs.forEach(blob => {
+								blob.setIsSoundOn(isSoundOn);
+							});
+						});
+				}}
 				handleDeleteHistoryButton={() => { this.resetBlobs(); }}
 			>
+				<audio ref={this.audioRefs.scissors} src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/scissors.mp3"} />
+				<audio ref={this.audioRefs.paper} src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/paper.mp3"} />
+				<audio ref={this.audioRefs.rock} src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/rock.mp3"} />
 				<canvas ref={this.canvasRef} className="living-rps-canvas" />
 			</ContentDisplay>
 		);

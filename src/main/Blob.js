@@ -1,7 +1,8 @@
-import { SCISSORS_IMAGE, PAPER_IMAGE, ROCK_IMAGE } from "./ImageConstants";
+import { SCISSORS_IMAGE, PAPER_IMAGE, ROCK_IMAGE } from "./BlobConstants";
 
 export class Blob {
-	constructor(canvasWidth, canvasHeight, blobSize, blobType = "none", fps = 60) {
+	constructor(canvasWidth, canvasHeight, blobSize, blobType = "none", fps = 60, audioRefCurrent = null) {
+		// Constructor
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
 
@@ -10,21 +11,33 @@ export class Blob {
 
 		this.fps = fps;
 
+		// Coords
 		this.x = 0; // These x and y are top left corner of the blob
 		this.y = 0;
+
+		// Image
 		this.img = null;
 
+		// Audio
+		this.audioRefCurrent = audioRefCurrent;
+
+		// Velocity
 		this.velocity = 80 / fps;
 		this.velocityBoost = 1;
 
+		// Detection distance
 		this.predatorDetectionDistance = blobSize * 3;
 		this.preyDetectionDistance = blobSize * 5;
 
+		// Flags
 		this.canTeleport = true;
 		this.isHungry = true;
+		this.isSoundOn = false;
 
+		// Angle
 		this.angle = 0;
 
+		// All blobs
 		this.allBlobs = [];
 
 		this.start();
@@ -44,6 +57,10 @@ export class Blob {
 		this.blobSize = blobSize;
 		this.predatorDetectionDistance = blobSize * 4;
 		this.preyDetectionDistance = blobSize * 2;
+	}
+
+	setIsSoundOn(isSoundOn) {
+		this.isSoundOn = isSoundOn;
 	}
 
 	// Set all blobs
@@ -67,6 +84,10 @@ export class Blob {
 				if (blob.blobType === this.getPredatorType()) {
 					this.blobType = blob.blobType;
 					this.img = blob.img;
+
+					if (this.isSoundOn && blob.audioRefCurrent) {
+						blob.audioRefCurrent.play();
+					}
 
 					blob.isHungry = false;
 					blob.velocityBoost = 1;
@@ -189,6 +210,7 @@ export class Blob {
 				break;
 			default:
 				this.img = null;
+				this.audioRefCurrent = null;
 				break;
 		}
 	}
