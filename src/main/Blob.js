@@ -84,6 +84,7 @@ export class Blob {
 				if (blob.blobType === this.getPredatorType()) {
 					this.blobType = blob.blobType;
 					this.img = blob.img;
+					this.audioRefCurrent = blob.audioRefCurrent;
 
 					if (this.isSoundOn && blob.audioRefCurrent) {
 						blob.audioRefCurrent.play();
