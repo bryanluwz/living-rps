@@ -79,7 +79,7 @@ export class Blob {
 		this.allBlobs.forEach(blob => {
 			// If collided
 			const distance = Math.sqrt(Math.pow(this.x - blob.x, 2) + Math.pow(this.y - blob.y, 2));
-			if (distance < this.blobSize && distance > 0) {
+			if (distance < (this.blobSize * 0.8) && distance > 0) {
 				// If predator
 				if (blob.blobType === this.getPredatorType()) {
 					this.blobType = blob.blobType;
@@ -87,6 +87,7 @@ export class Blob {
 					this.audioRefCurrent = blob.audioRefCurrent;
 
 					if (this.isSoundOn && blob.audioRefCurrent) {
+						blob.audioRefCurrent.currentTime = 0;
 						blob.audioRefCurrent.play();
 					}
 
@@ -116,10 +117,6 @@ export class Blob {
 			});
 
 			this.angle = sumAngle / nearbyPredators.length;
-
-			// if (Math.random() < (4 / this.fps)) {
-			// 	this.angle += Math.random() * Math.PI / 2 - Math.PI;
-			// }
 		}
 
 		// Run towards nearest prey
@@ -127,19 +124,21 @@ export class Blob {
 			const prey = nearbyPreys[0];
 			this.angle = Math.atan2(prey.y - this.y, prey.x - this.x);
 
-			// if (Math.random() < (4 / this.fps)) {
-			// 	this.angle += Math.random() * Math.PI / 2 - Math.PI;
-			// }
-
 			if (this.isHungry) {
 				this.velocityBoost += 0.05;
 				this.velocityBoost = Math.min(this.velocityBoost, 1.25);
 			}
 		}
+
 		else {
 			if (Math.random() < (2 / this.fps)) {
 				this.angle = Math.random() * 2 * Math.PI;
 			}
+		}
+
+		// If no prey at all, slow down
+		if (nearbyPreys.length === 0) {
+			this.velocityBoost = 1;
 		}
 
 		this.x += this.velocity * Math.cos(this.angle) * this.velocityBoost;

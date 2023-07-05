@@ -1,6 +1,9 @@
-import { Component, Fragment, createRef } from "react";
+import { Component, createRef } from "react";
 import { ContentDisplay } from "../components/others/";
 import { Blob } from "./Blob";
+
+const rootStyles = getComputedStyle(document.documentElement);
+const victoryColor = rootStyles.getPropertyValue('--lavender-pastel-font-1');
 
 export default class Main extends Component {
 	constructor(props) {
@@ -16,22 +19,22 @@ export default class Main extends Component {
 			blobSize: 50,
 			isEnd: false,
 			isSoundOn: false,
-			isSoundInit: false
+			isSoundInit: false,
+			victoryType: "none",
 		};
 
 		this.fps = 60;
 		this.canvasUpdateTimerTick = 0;
 		this.canvasUpdateTimer = setInterval(() => {
-			if (!this.state.isEnd) {
-				this.canvasUpdateTimerTick++;
-				this.canvasUpdate();
-			}
+			this.canvasUpdateTimerTick++;
+			this.canvasUpdate();
 		}, 1000 / this.fps);
 
 		this.audioRefs = {
 			scissors: createRef(),
 			paper: createRef(),
 			rock: createRef(),
+			victory: createRef(),
 		};
 	}
 
@@ -80,13 +83,23 @@ export default class Main extends Component {
 		this.renderBlobs();
 		this.updateBlobs();
 
-		// Check if game is over, (temp disabled)
-		// this.blobs.forEach(blob => {
-		// 	// If all blobs are of the same type
-		// 	if (this.blobs.every(b => b.blobType === blob.blobType)) {
-		// 		this.setState({ isEnd: true });
-		// 	}
-		// });
+		// Check if game is over
+		this.blobs.forEach(blob => {
+			// If all blobs are of the same type
+			if (!this.state.isEnd && this.blobs.every(b => b.blobType === blob.blobType)) {
+				this.setState({ isEnd: true, victoryType: this.blobs[0].blobType },
+					() => {
+						if (this.state.isSoundOn) {
+							setTimeout(() => {
+								this.audioRefs.victory.current.play();
+							}, 300);
+						}
+					});
+			}
+		});
+
+		// When game over
+		this.renderVictoryScene();
 	};
 
 	// Reset blobs
@@ -103,7 +116,6 @@ export default class Main extends Component {
 
 		for (let i = 0; i < this.state.scissorsBlobCount; i++) {
 			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "scissors", this.fps, this.audioRefs.scissors.current));
-			console.log(this.blobs[i]);
 		}
 
 		for (let i = 0; i < this.state.paperBlobCount; i++) {
@@ -143,6 +155,24 @@ export default class Main extends Component {
 		});
 	};
 
+	// Render victory scene
+	renderVictoryScene = () => {
+		const canvas = this.canvasRef.current;
+		if (!canvas) return;
+
+		const context = canvas.getContext('2d');
+
+		if (this.state.isEnd) {
+			context.fillStyle = victoryColor;
+			context.font = "bold 3em Poppins";
+			context.textAlign = "center";
+			context.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 30);
+
+			context.font = "bold 1.5em Poppins";
+			context.fillText(`${this.state.victoryType.toUpperCase()} wins`, canvas.width / 2, canvas.height / 2 + 10);
+		}
+	};
+
 	render() {
 		return (
 			<ContentDisplay
@@ -152,20 +182,21 @@ export default class Main extends Component {
 				faIcon={"fa-refresh"}
 				contentBodyAdditionalClasses={["living-rps-content-body"]}
 				overrideTitle={
-					<Fragment>
-						<span>Living RPS </span>
-						{this.state.isSoundOn ?
-							< i className="fa fa-volume-up" aria-hidden="true" /> :
-							< i className="fa fa-volume-off" aria-hidden="true" />}
-					</Fragment>
+					<div style={{ display: "flex", alignItems: "center" }}>
+						<div style={{ width: "20px" }}>
+						</div>
+						<div style={{ flexGrow: "1" }} >Living RPS </div>
+						<div style={{ width: "20px" }}>
+							{this.state.isSoundOn ?
+								< i className="fa fa-volume-up" aria-hidden="true" /> :
+								< i className="fa fa-volume-off" aria-hidden="true" />}
+						</div>
+					</div>
 				}
 				router={this.props.router}
 				handleHeaderTitleClick={() => {
-					// Play all sounds if sound is not initialized because chrome wont let me play sound without user interaction
 					if (!this.state.isSoundInit) {
-						this.audioRefs.scissors.current.play();
-						this.audioRefs.paper.current.play();
-						this.audioRefs.rock.current.play();
+						this.setState({ isSoundInit: true });
 					}
 					const isSoundOn = !this.state.isSoundOn;
 					this.setState({ isSoundOn: isSoundOn, isSoundInit: true },
@@ -177,9 +208,26 @@ export default class Main extends Component {
 				}}
 				handleDeleteHistoryButton={() => { this.resetBlobs(); }}
 			>
-				<audio ref={this.audioRefs.scissors} src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/scissors.mp3"} />
-				<audio ref={this.audioRefs.paper} src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/paper.mp3"} />
-				<audio ref={this.audioRefs.rock} src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/rock.mp3"} />
+				<audio
+					ref={this.audioRefs.scissors}
+					src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/scissors.mp3"}
+				/>
+
+				<audio
+					ref={this.audioRefs.paper}
+					src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/paper.mp3"}
+				/>
+
+				<audio
+					ref={this.audioRefs.rock}
+					src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/rock.mp3"}
+				/>
+
+				<audio
+					ref={this.audioRefs.victory}
+					src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/tada.mp3"}
+				/>
+
 				<canvas ref={this.canvasRef} className="living-rps-canvas" />
 			</ContentDisplay>
 		);
