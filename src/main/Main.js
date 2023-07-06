@@ -1,4 +1,4 @@
-import { Component, createRef } from "react";
+import { Component, Fragment, createRef } from "react";
 import { ContentDisplay } from "../components/others/";
 import { Blob } from "./Blob";
 
@@ -67,6 +67,7 @@ export default class Main extends Component {
 		this.blobs.forEach(blob => {
 			blob.updateCanvasSize(canvas.width, canvas.height);
 			blob.updateBlobSize(blobSize);
+			blob.resetVelocity();
 		}
 		);
 	};
@@ -186,47 +187,68 @@ export default class Main extends Component {
 						<div style={{ width: "20px" }}>
 						</div>
 						<div style={{ flexGrow: "1" }} >Living RPS </div>
-						<div style={{ width: "20px" }}>
+						<div style={{ width: "20px" }}
+							onClick={() => {
+								if (!this.state.isSoundInit) {
+									this.setState({ isSoundInit: true });
+								}
+								const isSoundOn = !this.state.isSoundOn;
+								this.setState({ isSoundOn: isSoundOn, isSoundInit: true },
+									() => {
+										this.blobs.forEach(blob => {
+											blob.setIsSoundOn(isSoundOn);
+											switch (blob.blobType) {
+												case "scissors":
+													blob.resetAudioRef(this.audioRefs.scissors.current);
+													break;
+												case "paper":
+													blob.resetAudioRef(this.audioRefs.paper.current);
+													break;
+												case "rock":
+													blob.resetAudioRef(this.audioRefs.rock.current);
+													break;
+												default:
+													break;
+											}
+										});
+									});
+							}}>
 							{this.state.isSoundOn ?
-								< i className="fa fa-volume-up" aria-hidden="true" /> :
-								< i className="fa fa-volume-off" aria-hidden="true" />}
+								< i className="fa fa-volume-up" aria-hidden="true" style={{ cursor: "pointer" }} /> :
+								< i className="fa fa-volume-off" aria-hidden="true" style={{ cursor: "pointer" }} />}
 						</div>
 					</div>
 				}
 				router={this.props.router}
 				handleHeaderTitleClick={() => {
-					if (!this.state.isSoundInit) {
-						this.setState({ isSoundInit: true });
-					}
-					const isSoundOn = !this.state.isSoundOn;
-					this.setState({ isSoundOn: isSoundOn, isSoundInit: true },
-						() => {
-							this.blobs.forEach(blob => {
-								blob.setIsSoundOn(isSoundOn);
-							});
-						});
+					console.log("Do not the title");
 				}}
 				handleDeleteHistoryButton={() => { this.resetBlobs(); }}
 			>
-				<audio
-					ref={this.audioRefs.scissors}
-					src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/scissors.mp3"}
-				/>
+				{
+					this.state.isSoundInit &&
+					<Fragment>
+						<audio
+							ref={this.audioRefs.scissors}
+							src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/scissors.mp3"}
+						/>
 
-				<audio
-					ref={this.audioRefs.paper}
-					src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/paper.mp3"}
-				/>
+						<audio
+							ref={this.audioRefs.paper}
+							src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/paper.mp3"}
+						/>
 
-				<audio
-					ref={this.audioRefs.rock}
-					src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/rock.mp3"}
-				/>
+						<audio
+							ref={this.audioRefs.rock}
+							src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/rock.mp3"}
+						/>
 
-				<audio
-					ref={this.audioRefs.victory}
-					src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/tada.mp3"}
-				/>
+						<audio
+							ref={this.audioRefs.victory}
+							src={process.env.PUBLIC_URL + "/other-assets/Living-RPS-sound-effects/tada.mp3"}
+						/>
+					</Fragment>
+				}
 
 				<canvas ref={this.canvasRef} className="living-rps-canvas" />
 			</ContentDisplay>

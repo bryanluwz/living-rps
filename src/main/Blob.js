@@ -22,7 +22,7 @@ export class Blob {
 		this.audioRefCurrent = audioRefCurrent;
 
 		// Velocity
-		this.velocity = 80 / fps;
+		this.velocity = (Math.sqrt(Math.pow(canvasWidth, 2) + Math.pow(canvasHeight, 2))) / (10 * fps);
 		this.velocityBoost = 1;
 
 		// Detection distance
@@ -66,6 +66,16 @@ export class Blob {
 	// Set all blobs
 	setAllBlobs(allBlobs) {
 		this.allBlobs = allBlobs;
+	}
+
+	// Reset audio refs
+	resetAudioRef(audioRefCurrent) {
+		this.audioRefCurrent = audioRefCurrent;
+	}
+
+	// Reset speed
+	resetVelocity() {
+		this.velocity = Math.sqrt(Math.pow(this.canvasWidth, 2) + Math.pow(this.canvasHeight, 2)) / (10 * this.fps);
 	}
 
 	// Like Unity Update method
