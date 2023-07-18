@@ -5,6 +5,8 @@
     background-color: var(--lavender-pastel-5);
     border-radius: 30px;
     border: 10px solid var(--lavender-pastel-3);
+
+    outline: transparent;
 }
 
 .living-rps-content-body {

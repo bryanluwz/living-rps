@@ -21,6 +21,7 @@ export default class Main extends Component {
 			isSoundOn: false,
 			isSoundInit: false,
 			victoryType: "none",
+			speedMultiplier: 1,
 		};
 
 		this.fps = 60;
@@ -105,6 +106,7 @@ export default class Main extends Component {
 
 	// Reset blobs
 	resetBlobs = () => {
+		this.setState({ isEnd: false, victoryType: "none" });
 		this.initBlobs();
 	};
 
@@ -116,15 +118,15 @@ export default class Main extends Component {
 		this.blobs = [];
 
 		for (let i = 0; i < this.state.scissorsBlobCount; i++) {
-			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "scissors", this.fps, this.audioRefs.scissors.current));
+			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "scissors", this.fps, this.audioRefs.scissors.current, this.state.speedMultiplier));
 		}
 
 		for (let i = 0; i < this.state.paperBlobCount; i++) {
-			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "paper", this.fps, this.audioRefs.paper.current));
+			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "paper", this.fps, this.audioRefs.paper.current, this.state.speedMultiplier));
 		}
 
 		for (let i = 0; i < this.state.rockBlobCount; i++) {
-			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "rock", this.fps, this.audioRefs.rock.current));
+			this.blobs.push(new Blob(canvas.width, canvas.height, this.state.blobSize, "rock", this.fps, this.audioRefs.rock.current, this.state.speedMultiplier));
 		}
 
 		// Each blob would also have a reference to the other blobs
@@ -184,9 +186,26 @@ export default class Main extends Component {
 				contentBodyAdditionalClasses={["living-rps-content-body"]}
 				overrideTitle={
 					<div style={{ display: "flex", alignItems: "center" }}>
-						<div style={{ width: "20px" }}>
+						<div style={{ width: "20px" }}
+							onClick={() => {
+								let speedMultiplier = this.state.speedMultiplier;
+								speedMultiplier = speedMultiplier === 1 ? 2 : 1;
+								this.setState({ speedMultiplier: speedMultiplier },
+									() => {
+										this.blobs.forEach(blob => {
+											blob.speedMultiplier = speedMultiplier;
+											blob.resetVelocity();
+										});
+									});
+
+							}}
+						>
+							{this.state.speedMultiplier === 1 ?
+								<i className="fa fa-step-forward" /> :
+								<i className="fa fa-fast-forward" />
+							}
 						</div>
-						<div style={{ flexGrow: "1" }} >Living RPS </div>
+						<div style={{ flexGrow: "1" }} > {Main.displayName} </div>
 						<div style={{ width: "20px" }}
 							onClick={() => {
 								if (!this.state.isSoundInit) {
@@ -220,9 +239,7 @@ export default class Main extends Component {
 					</div>
 				}
 				router={this.props.router}
-				handleHeaderTitleClick={() => {
-					console.log("Do not the title");
-				}}
+				handleHeaderTitleClick={() => { }}
 				handleDeleteHistoryButton={() => { this.resetBlobs(); }}
 			>
 				{

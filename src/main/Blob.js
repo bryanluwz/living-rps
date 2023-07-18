@@ -1,7 +1,7 @@
 import { SCISSORS_IMAGE, PAPER_IMAGE, ROCK_IMAGE } from "./BlobConstants";
 
 export class Blob {
-	constructor(canvasWidth, canvasHeight, blobSize, blobType = "none", fps = 60, audioRefCurrent = null) {
+	constructor(canvasWidth, canvasHeight, blobSize, blobType = "none", fps = 60, audioRefCurrent = null, speedMultiplier = 1) {
 		// Constructor
 		this.canvasWidth = canvasWidth;
 		this.canvasHeight = canvasHeight;
@@ -10,6 +10,7 @@ export class Blob {
 		this.blobType = blobType;
 
 		this.fps = fps;
+		this.speedMultiplier = speedMultiplier;
 
 		// Coords
 		this.x = 0; // These x and y are top left corner of the blob
@@ -75,7 +76,7 @@ export class Blob {
 
 	// Reset speed
 	resetVelocity() {
-		this.velocity = Math.sqrt(Math.pow(this.canvasWidth, 2) + Math.pow(this.canvasHeight, 2)) / (10 * this.fps);
+		this.velocity = Math.sqrt(Math.pow(this.canvasWidth, 2) + Math.pow(this.canvasHeight, 2)) / (20 * this.fps) * this.speedMultiplier;
 	}
 
 	// Like Unity Update method
@@ -205,6 +206,7 @@ export class Blob {
 		// Init coordinates, to random position within canvas
 		this.x = Math.floor(0 + Math.random() * (this.canvasWidth - this.blobSize));
 		this.y = Math.floor(0 + Math.random() * (this.canvasHeight - this.blobSize));
+		this.resetVelocity();
 		this.angle = Math.random() * 2 * Math.PI;
 
 		// Init image
